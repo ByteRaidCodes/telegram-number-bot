@@ -1,55 +1,46 @@
 import os
 import requests
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes
-)
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # your bot token from Railway / env
 
-API_URL = "https://adhartofamily.vercel.app/fetch?key=kalyug_here&aadhaar=222222222222"
-
-def format_response(data):
-    message = "📡 *Family Details*\n\n"
-    
-    message += f"🆔 *RC ID:* `{data.get('rcId', '-')}`\n"
-    message += f"🏡 *Scheme:* {data.get('schemeName', '-')} ({data.get('schemeId', '-')})\n\n"
-
-    members = data.get("memberDetailsList", [])
-    message += "👨‍👩‍👧 *Family Members:*\n"
-    
-    for i, m in enumerate(members, start=1):
-        uid = "✔️" if m.get("uid") == "Yes" else "❌"
-        name = m.get("memberName", "Unknown").strip().title()
-        relation = m.get("releationship_name", "-").title()
-        message += f"{i}. {name} — {relation} — UID: {uid}\n"
-
-    message += f"\n📍 District: {data.get('homeDistName', '-')}\n"
-    message += f"🗺️ State: {data.get('homeStateName', '-')}\n"
-    message += f"📌 Allowed OnOrc: {data.get('allowed_onorc', '-')}\n"
-
-    return message
+API_BASE = "https://adhartofamily.vercel.app/fetch"
+API_KEY = "kalyug_here"  # as per your API
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot is Live! Use /true to get details 📡")
+    await update.message.reply_text(
+        "Bot is live! Use /true <aadhaar_number> to fetch data."
+    )
 
 async def true_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    args = context.args
+    if not args:
+        await update.message.reply_text(
+            "⚠️ Please provide Aadhaar number. Example: /true 222222222222"
+        )
+        return
+
+    aadhaar = args[0]
+
+    params = {
+        "key": API_KEY,
+        "aadhaar": aadhaar
+    }
+
     try:
-        response = requests.get(API_URL, timeout=10)
-        data = response.json()
-
-        formatted = format_response(data)
-
-        await update.message.reply_text(formatted, parse_mode="Markdown")
-
+        resp = requests.get(API_BASE, params=params, timeout=15)
+        data = resp.json()
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
+        return
+
+    # Send raw JSON response to you — good for testing
+    await update.message.reply_text(f"📡 API Response:\n{data}")
 
 def main():
     if not BOT_TOKEN:
-        print("❌ BOT_TOKEN missing! Set it in Railway.")
+        print("Error: BOT_TOKEN not provided!")
         return
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
