@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-API_BASE = "https://ad-hartofamily.vercel.app/fetch"
+API_BASE = "https://adhartofamily.vercel.app/fetch"
 API_KEY = "kalyug_here"
 
 
@@ -45,7 +45,7 @@ async def true_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     aadhaar = args[0]
-    params = {"key": API_KEY, "aad-haar": aadhaar}
+    params = {"key": API_KEY, "aadhaar": aadhaar}
 
     try:
         resp = requests.get(API_BASE, params=params, timeout=10)
@@ -71,3 +71,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
