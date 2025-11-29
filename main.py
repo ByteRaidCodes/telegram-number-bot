@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-API_BASE = "https://adhar-tofamily.vercel.app/fetch"
+API_BASE = "https://adhartofamily.vercel.app/fetch"
 API_KEY = "kalyug_here"
 
 
@@ -71,5 +71,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
