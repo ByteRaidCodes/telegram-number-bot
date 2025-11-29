@@ -1,9 +1,10 @@
 import os
+import json
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Token will come from Railway variable
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 async def get_number_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
@@ -14,30 +15,27 @@ async def get_number_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         response = requests.get(url).json()
-        if "error" in response:
-            return await update.message.reply_text("❌ No data found or wrong number")
 
-        text = (
-            f"📞 *Phone Info:*\n"
-            f"Number: {response.get('number', 'N/A')}\n"
-            f"Owner: {response.get('name', 'N/A')}\n"
-            f"State: {response.get('state', 'N/A')}\n"
-            f"Carrier: {response.get('carrier', 'N/A')}\n"
-        )
-        await update.message.reply_text(text, parse_mode="Markdown")
+        # PRINT FULL RAW JSON TO CONSOLE / LOGS
+        print("\n===== RAW API DATA =====")
+        print(json.dumps(response, indent=2))
+        print("========================\n")
 
-    except:
+        await update.message.reply_text("🧪 Testing complete!\nCheck Railway Logs for full data.")
+
+    except Exception as e:
+        print("API ERROR:", e)
         await update.message.reply_text("⚠️ API Error — Try later!")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Send `/num 6200303551` to get info!")
+    await update.message.reply_text("Send `/num 6200303551` to test!")
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("num", get_number_info))
 
-    print("Bot started…")
+    print("Bot running…")
     app.run_polling()
 
 if __name__ == "__main__":
