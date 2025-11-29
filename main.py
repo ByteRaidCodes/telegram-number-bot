@@ -10,6 +10,9 @@ API_KEY = "kalyug_here"
 
 
 def format_family(data):
+    if not data or "memberDetailsList" not in data:
+        return "❌ No valid family data found."
+
     msg = "🏛 *Ration Card Details*\n\n"
 
     msg += f"🆔 *RC ID:* `{data.get('rcId','-')}`\n"
@@ -20,7 +23,17 @@ def format_family(data):
     for i, m in enumerate(data.get("memberDetailsList", []), start=1):
         name = m.get("memberName", "-").strip().title()
         rel = m.get("releationship_name", "-").title()
-        uid = "✔️" if m.get("uid") == "Yes" else "❌"
+
+        # Improved UID detection
+        uid_raw = (
+            m.get("uid")
+            or m.get("uidStatus")
+            or m.get("uid_flag")
+            or "Unknown"
+        )
+
+        uid = "✔️" if uid_raw.lower() == "yes" else "❌" if uid_raw.lower() == "no" else "❓"
+
         msg += f"{i}. {name} — {rel} — UID: {uid}\n"
 
     msg += "\n📍 District: " + data.get("homeDistName", "-").title()
@@ -40,7 +53,8 @@ async def true_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if not args:
         await update.message.reply_text(
-            "⚠️ Please enter Aadhaar number. Example: /true 222222222222"
+            "⚠️ Please enter Aadhaar number. Example:\n`/true 222222222222`",
+            parse_mode="Markdown"
         )
         return
 
@@ -49,7 +63,18 @@ async def true_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         resp = requests.get(API_BASE, params=params, timeout=10)
-        data = resp.json()
+        text = resp.text.strip()
+
+        if not text:
+            await update.message.reply_text("❌ API returned empty response")
+            return
+
+        try:
+            data = resp.json()
+        except:
+            await update.message.reply_text(f"📄 API Response:\n{text}")
+            return
+
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
         return
@@ -71,6 +96,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
